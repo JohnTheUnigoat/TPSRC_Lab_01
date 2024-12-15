@@ -26,12 +26,16 @@ const AddressSection = ({numberOfSteps, stepNumber, addressValue, onAddressValue
         if (addressValue.binaryValue.length === bitCount) return;
 
         if (addressValue.binaryValue.length < bitCount) {
-            let newAddressValue = {...addressValue}
-            newAddressValue.binaryValue.padStart(bitCount, '0');
+            let newAddressValue = {
+                ...addressValue,
+                binaryValue: addressValue.binaryValue.padStart(bitCount, '0')
+            }
 
+            console.log("updating address value", {newAddressValue, bitCount, currLength: addressValue.binaryValue.length})
             onAddressValueChange(newAddressValue);
         }
 
+        console.log("updating address value", {newAddressValue: null, bitCount, currLength: addressValue.binaryValue.length})
         onAddressValueChange(null);
     }, [bitCount])
 

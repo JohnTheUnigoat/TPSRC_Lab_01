@@ -1,12 +1,13 @@
 import './main.css'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Step from './components/step';
 import LabelSection from './components/label_section';
 import SignalNames from './components/signal_names';
 import SignalDeleteButtonRow from './components/signal_delete_button_row';
+import generateAHDLFromSteps from './stepsToAhdl';
 
-function getInitialLabelData() {
+function getInitialLabels() {
   return {
     state: [ "State Input 1", "State Input 2", "State Input 3"],
     condition: ["Cond. Input 1", "Cond. Input 2", "Cond. Input 3"],
@@ -34,39 +35,27 @@ function getInitialStepData() {
   };
 }
 
+function getInitialSteps() {
+  return [
+    getInitialStepData(),
+    getInitialStepData(),
+    getInitialStepData(),
+  ];
+}
+
 function App() {
-  const [labelData, setLabelData] = useState(getInitialLabelData())
+  const [labels, setLabels] = useState(getInitialLabels())
+  const [steps, setSteps] = useState(getInitialSteps());
+  const [isSaved, setIsSaved] = useState(true);
+  
+  const fileInputRef = useRef(null);
 
-  const [steps, setSteps] = useState([
-    getInitialStepData(),
-    getInitialStepData(),
-    getInitialStepData(),
-  ]);
-
-  const [selectedAddressCellIndex, setSelectedAddressCellIndex] = useState(null);
-  const [selectedAddressTargetIndex, setSelectedAddressTargetIndex] = useState(null);
-
-  useEffect(() => {
-    if (selectedAddressCellIndex === null || selectedAddressTargetIndex === null) return;
-
-    let selectedTargetStepNumber = selectedAddressTargetIndex + 1;
-    let selectedTargetStepNumberBinary = selectedTargetStepNumber.toString(2).padStart(4, '0');
-
-    let addressValue = selectedTargetStepNumberBinary.split('');
-
-    let updatedSteps = [...steps];
-    updatedSteps[selectedAddressCellIndex].address = addressValue;;
-
-    setSteps(updatedSteps);
-
-    setSelectedAddressCellIndex(null);
-    setSelectedAddressTargetIndex(null);
-  }, [selectedAddressCellIndex, selectedAddressTargetIndex])
+  useEffect(() => {setIsSaved(false)}, [steps, labels]);
 
   function updateLabelsValue(key, updatedLabels){
-    let updatedLabelData = {...labelData};
+    let updatedLabelData = {...labels};
     updatedLabelData[key] = updatedLabels;
-    setLabelData(updatedLabelData)
+    setLabels(updatedLabelData)
   }
 
   function updateStepValue(index, updatedStep){
@@ -102,7 +91,7 @@ function App() {
   }
 
   function addSignal(key) {
-    const newSignalNumber = labelData[key].length + 1;
+    const newSignalNumber = labels[key].length + 1;
 
     const newSignalName = ({
       'state': `State Input ${newSignalNumber}`,
@@ -110,9 +99,9 @@ function App() {
       'control': `Output ${newSignalNumber}`,
     })[key];
 
-    setLabelData({
-      ...labelData,
-      [key]: [...labelData[key], newSignalName],
+    setLabels({
+      ...labels,
+      [key]: [...labels[key], newSignalName],
     });
 
     setSteps([...steps].map(step => ({
@@ -122,16 +111,16 @@ function App() {
   }
 
   function deleteSignal(key, index) {
-    const updatedLabelArray = [...labelData[key]];
+    const updatedLabelArray = [...labels[key]];
 
     updatedLabelArray.splice(index, 1);
 
     const updatedLabelData = {
-      ...labelData,
+      ...labels,
       [key]: updatedLabelArray,
     };
 
-    setLabelData(updatedLabelData);
+    setLabels(updatedLabelData);
 
     const stepsCopy = [...steps]
 
@@ -150,24 +139,74 @@ function App() {
 
     setSteps(updatedSteps)
   }
+  
+  function saveToJson() {
+    const data = JSON.stringify({labels, steps});
+    saveFile(data, 'table_program.json');
+    setIsSaved(true);
+  }
 
-  const maxLabelLength = Math.max(...[...labelData.state, ...labelData.control, ...labelData.condition].map(label => label.length));
+  function triggerLoadFromJson() {
+    if (!isSaved && !confirm("You have unsaved changes - are you sure you want to override your table?")) return;
+
+    fileInputRef.current.click();
+  }
+
+  async function loadFromJson(file) {
+    const text = await file.text();
+    const data = JSON.parse(text);
+
+    setLabels(data.labels);
+    setSteps(data.steps);
+    setIsSaved(true);
+  }
+
+  function exportAhdl() {
+    const data = generateAHDLFromSteps(steps);
+    saveFile(data, 'modules.tdf');
+  }
+
+  function saveFile(text, fileName) {
+
+    const blob = new Blob([text], {
+      type: 'application/json'
+    });
+
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
+  }
+
+  function reset() {
+    if (!isSaved && !confirm("You have unsaved changes - are you sure you want to reset?")) return;
+
+    setLabels(getInitialLabels());
+    setSteps(getInitialSteps());
+    setIsSaved(false);
+  }
+
+  const maxLabelLength = Math.max(...[...labels.state, ...labels.control, ...labels.condition].map(label => label.length));
 
   return <>
-
-    <table>
+    <table style={{marginBottom: "1em"}}>
       <tbody>
         <tr>
           <td rowSpan={2}>Step</td>
-          <LabelSection maxValuLength={maxLabelLength} values={labelData.state} onValuesChange={newLabels => updateLabelsValue('state', newLabels)} />
-          <LabelSection maxValuLength={maxLabelLength} values={labelData.condition} onValuesChange={newLabels => updateLabelsValue('condition', newLabels)} />
-          <LabelSection maxValuLength={maxLabelLength} values={labelData.control} onValuesChange={newLabels => updateLabelsValue('control', newLabels)} />
+          <LabelSection maxValuLength={maxLabelLength} values={labels.state} onValuesChange={newLabels => updateLabelsValue('state', newLabels)} />
+          <LabelSection maxValuLength={maxLabelLength} values={labels.condition} onValuesChange={newLabels => updateLabelsValue('condition', newLabels)} />
+          <LabelSection maxValuLength={maxLabelLength} values={labels.control} onValuesChange={newLabels => updateLabelsValue('control', newLabels)} />
           <td>Address</td>
           <td></td>
         </tr>
         <tr>
-          <SignalNames isInput={true} count={labelData.state.length + labelData.condition.length} />
-          <SignalNames isInput={false} count={labelData.control.length} />
+          <SignalNames isInput={true} count={labels.state.length + labels.condition.length} />
+          <SignalNames isInput={false} count={labels.control.length} />
           <td></td>
           <td></td>
         </tr>
@@ -177,26 +216,27 @@ function App() {
               numberOfSteps={steps.length}
               stepNumber={index+1}
               stepData={step} onStepDataChange={newStep => updateStepValue(index, newStep)}
-              isAddressSelected={selectedAddressCellIndex === index}
-              onAddressClick={() => setSelectedAddressCellIndex(index)}
-              onAddressTargetClick={() => setSelectedAddressTargetIndex(index)}
-              onDeleteStep={deleteStep}
+              onDeleteStep={() => deleteStep(index)}
               onAddSignal={addSignal}
             />
           )}
-          <SignalDeleteButtonRow labelData={labelData} onSignalDelete={deleteSignal} />
+          <SignalDeleteButtonRow labelData={labels} onSignalDelete={deleteSignal} />
           <tr>
             <td
-              colSpan={labelData.state.length + labelData.condition.length + labelData.control.length + 6}
-              style={{color: "#777"}}
+              colSpan={labels.state.length + labels.condition.length + labels.control.length + 6}
+              style={{color: "#777", height: "1.5em"}}
               onClick={() => addStep()}
             >+</td>
           </tr>
       </tbody>
     </table>
+
+    <button onClick={() => saveToJson()}>Save (JSON)</button>
+    <button onClick={() => triggerLoadFromJson()}>Load (JSON)</button>
+    <input type="file" accept='.json' onChange={e => loadFromJson(e.target.files[0])} ref={fileInputRef} style={{display: "none"}} />
+    <button onClick={() => exportAhdl()}>Export (AHDL)</button>
+    <button onClick={() => reset()}>Reset</button>
   </>
 }
-
-
 
 export default App

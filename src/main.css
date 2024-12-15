@@ -4,7 +4,7 @@
 }
 
 table, tr, td {
-    border: 1px solid #cccccc;
+    border: 1px solid #ccc;
     border-collapse: collapse;
 }
 
@@ -32,4 +32,8 @@ thead td {
     writing-mode: vertical-lr;
     text-orientation: mixed;
     transform: rotate(180deg);
+}
+
+button {
+    margin-right: 0.5em;
 }
