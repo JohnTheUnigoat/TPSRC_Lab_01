@@ -1,22 +1,17 @@
-import styles from './label_section.module.css'
+import Label from './label'
 
-const LabelSection = ({values, onValuesChange}) => {
-    function updateValue(index, newvalue) {
+const LabelSection = ({maxValuLength, values, onValuesChange}) => {
+    function updateValue(index, newValue) {
         let newValues = [...values];
-        newValues[index] = newvalue;
+        newValues[index] = newValue;
         onValuesChange(newValues);
-    }
-
-    const tdStyle = {
-        writingMode: "vertical-lr",
-        textOrientation: "mixed",
-        transform: "rotate(180deg)",
     }
 
     return <>
         {values.map((value, index) => 
-            <td key={index} style={tdStyle} >{value}</td>
+            <Label key={index} maxValuLength={maxValuLength} value={value} onChange={newValue => updateValue(index, newValue)} />
         )}
+        <td rowSpan={2}></td>
     </>
 }
 

@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState, useRef } from 'react';
-import styles from './address_section.module.css'
 
 const AddressSection = ({numberOfSteps, stepNumber, addressValue, onAddressValueChange}) => {
     const [isEditMode, setIsEditMode] = useState(false);
@@ -37,15 +36,12 @@ const AddressSection = ({numberOfSteps, stepNumber, addressValue, onAddressValue
     }, [bitCount])
 
     useEffect(() => {
-        console.log("reacting to isEdit")
         if (isEditMode) {
-            console.log("should click thing", selectRef )
             selectRef.current?.focus();
         }
     }, [isEditMode])
 
-    function handleChange(e) {
-        let index = +e.target.value;
+    function handleSelectOption(index) {
         onAddressValueChange(addressValues[index]);
         setIsEditMode(false);
     }
@@ -53,8 +49,6 @@ const AddressSection = ({numberOfSteps, stepNumber, addressValue, onAddressValue
     const getDisplayValue = addressValue => addressValue
         ? <>{addressValue.binaryValue} ({addressValue.decimalValue})</>
         : '';
-
-    console.log(stepNumber)
 
     return <td
             style={{ position: "relative", width: `${bitCount + 4}em`}}
@@ -65,28 +59,14 @@ const AddressSection = ({numberOfSteps, stepNumber, addressValue, onAddressValue
             {isEditMode && <select
                 style = {{position: "absolute", top: 0, left: 0, right: 0, zIndex: 2}}
                 value={addressValues.indexOf(addressValue)}
-                onChange={handleChange}
+                onChange={() => {}}
                 size={addressValues.length}
                 ref={selectRef}>
                     {addressValues.map((addressValueOption, index) => 
-                        <option key={index} value={index}>{getDisplayValue(addressValueOption)}</option>
+                        <option key={index} value={index} onClick={e => handleSelectOption(+e.target.value)}>{getDisplayValue(addressValueOption)}</option>
                     )}
             </select>}
-    </td>
-
-    if (isEditMode) {
-        return <td style={{position: "relative", width: `${bitCount + 4}em`}}>
-            <select style = {{position: "relative"}} value={addressValues.indexOf(addressValue)} onChange={handleChange} size={addressValues.length} >
-                {addressValues.map((addressValueOption, index) => 
-                    <option key={index} value={index}>{getDisplayValue(addressValueOption)}</option>
-                )}
-            </select>
-        </td>
-    } else {
-        return <td style={{position: "relative", width: `${bitCount + 4}em`}}>
-            <div style={{position: "absolute", inset: 0}} onClick={() => setIsEditMode(true)}>{getDisplayValue(addressValue)}</div>
-        </td>;
-    }
+    </td>;
 }
 
 export default AddressSection;

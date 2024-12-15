@@ -1,7 +1,12 @@
-import styles from './step_section.module.css'
 import Cell from './cell'
 
-const StepSection = ({sectionItems, onSectionItemsChange}) => {
+const StepSection = ({
+    sectionItems,
+    onSectionItemsChange,
+    includeAddButton,
+    addButtonRowSpan,
+    onAddSignal,
+}) => {
     function updateItemValue(index, value){
         let updatedList = [...sectionItems];
 
@@ -10,16 +15,11 @@ const StepSection = ({sectionItems, onSectionItemsChange}) => {
         onSectionItemsChange(updatedList);
     }
 
-    // return <div className={styles.stepSection}>
-    //     {sectionItems.map((item, index) => 
-    //         <Cell key={index} value={item} onChange={(value) => updateItemValue(index, value)} />
-    //     )}
-    // </div>;
-
     return <>
         {sectionItems.map((item, index) => 
             <Cell key={index} value={item} onChange={(value) => updateItemValue(index, value)} />
         )}
+        {includeAddButton && <td rowSpan={addButtonRowSpan} style={{width: "1.5em", color: "#777"}} onClick={onAddSignal}>+</td>}
     </>;
 }
 

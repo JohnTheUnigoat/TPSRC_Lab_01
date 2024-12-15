@@ -2,7 +2,6 @@ import styles from './cell.module.css';
 
 const Cell = ({value, onChange}) => {
     function updateValue() {
-        console.log("updating value")
         let nextValues = {
             "00": "10",
             "10": "01",
