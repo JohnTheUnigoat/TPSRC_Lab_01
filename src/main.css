@@ -1,0 +1,35 @@
+* {
+    font-family: monospace;
+    font-size: 1.1rem;
+}
+
+table, tr, td {
+    border: 1px solid #eee;
+    border-collapse: collapse;
+}
+
+td {
+    /* width: 2.5em;
+    height: 2em; */
+    -webkit-user-select: none; /* Safari */        
+    -moz-user-select: none; /* Firefox */
+    -ms-user-select: none; /* IE10+/Edge */
+    user-select: none; /* Standard */
+    text-align: center; 
+    vertical-align: middle;
+    /* display: flex; */
+    /* justify-content: center; */
+    /* align-items: center; */
+    /* border-collapse: collapse; */
+}
+
+td.cell {
+    width: 2.5em;
+    height: 2em;
+}
+
+thead td {
+    writing-mode: vertical-lr;
+    text-orientation: mixed;
+    transform: rotate(180deg);
+}

@@ -1,35 +1,123 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import './main.css'
+
+import { useEffect, useState } from 'react'
+import Step from './components/step';
+import LabelSection from './components/label_section';
+import SignalNames from './components/signal_names';
+
+function getInitialLabelData() {
+  return {
+    state: [ "grabby thing", "pressure", "idk", "something else"],
+    condition: ["heyo", "woah"],
+    control: ["grab", "pump", "rotate"]
+  }
+}
+
+function getInitialStepData() {
+  return {
+    state: [
+      "00",
+      "00",
+      "00",
+      "00",
+    ],
+    condition: [
+      "00",
+      "00",
+    ],
+    control: [
+      "00",
+      "00",
+      "00",
+    ],
+    address: null
+  };
+}
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [labelData, setLabelData] = useState(getInitialLabelData())
 
-  return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+  const [steps, setSteps] = useState([
+    getInitialStepData(),
+    getInitialStepData(),
+    getInitialStepData(),
+  ]);
+
+  console.log(labelData);
+
+  const [selectedAddressCellIndex, setSelectedAddressCellIndex] = useState(null);
+  const [selectedAddressTargetIndex, setSelectedAddressTargetIndex] = useState(null);
+
+  useEffect(() => {
+    if (selectedAddressCellIndex === null || selectedAddressTargetIndex === null) return;
+
+    let selectedTargetStepNumber = selectedAddressTargetIndex + 1;
+    let selectedTargetStepNumberBinary = selectedTargetStepNumber.toString(2).padStart(4, '0');
+
+    let addressValue = selectedTargetStepNumberBinary.split('');
+
+    let updatedSteps = [...steps];
+    updatedSteps[selectedAddressCellIndex].address = addressValue;;
+
+    setSteps(updatedSteps);
+
+    setSelectedAddressCellIndex(null);
+    setSelectedAddressTargetIndex(null);
+  }, [selectedAddressCellIndex, selectedAddressTargetIndex])
+
+  function updateLabelsValue(key, updatedLabels){
+    let updatedLabelData = {...labelData};
+    updatedLabelData[key] = updatedLabels;
+    setLabelData(updatedLabelData)
+  }
+
+  function updateStepValue(index, updatedStep){
+    let updatedList = [...steps];
+    updatedList[index] = updatedStep;
+    setSteps(updatedList);
+  }
+
+  return <>
+
+    <table>
+      {/* <thead>
+        <tr>
+          <td rowSpan={2}>Step</td>
+          <LabelSection values={labelData.state} onValuesChange={newLabels => updateLabelsValue('state', newLabels)} />
+          <LabelSection values={labelData.condition} onValuesChange={newLabels => updateLabelsValue('condition', newLabels)} />
+          <LabelSection values={labelData.control} onValuesChange={newLabels => updateLabelsValue('control', newLabels)} />
+        </tr>
+      </thead> */}
+      <tbody>
+        <tr>
+          <td rowSpan={2}>Step</td>
+          <LabelSection values={labelData.state} onValuesChange={newLabels => updateLabelsValue('state', newLabels)} />
+          <LabelSection values={labelData.condition} onValuesChange={newLabels => updateLabelsValue('condition', newLabels)} />
+          <LabelSection values={labelData.control} onValuesChange={newLabels => updateLabelsValue('control', newLabels)} />
+            {/* <td></td> */}
+        </tr>
+        <tr>
+          <SignalNames isInput={true} count={labelData.state.length + labelData.condition.length} />
+          <SignalNames isInput={false} count={labelData.control.length} />
+          {/* <td></td> */}
+
+        </tr>
+        {steps.map((step, index) =>
+          <Step
+            key={index}
+            numberOfSteps={steps.length}
+            stepNumber={index+1}
+            stepData={step} onStepDataChange={newStep => updateStepValue(index, newStep)}
+            isAddressSelected={selectedAddressCellIndex === index}
+            onAddressClick={() => setSelectedAddressCellIndex(index)}
+            onAddressTargetClick={() => setSelectedAddressTargetIndex(index)}
+          />
+        )}
+      </tbody>
+    </table>
+  </>
 }
+
+
 
 export default App

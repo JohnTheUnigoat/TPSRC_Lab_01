@@ -1,0 +1,4 @@
+.stepSection {
+    display: flex;
+    border-right: 0.5px solid black;
+}
